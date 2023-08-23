@@ -1,41 +1,40 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from 'react-router-dom'
-import { createEvent, getGames } from '../../managers/EventManager.js'
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from 'react-router-dom'
+import { getSingleEvent, editEvent } from "../../managers/EventManager.js"
+import { getGames } from "../../managers/GameManager.js"
 
-
-export const EventForm = () => {
+export const EditEventForm = () => {
+    const { eventId } = useParams()
     const navigate = useNavigate()
     const [games, setGames] = useState([])
 
-    /*
-        Since the input fields are bound to the values of
-        the properties of this state variable, you need to
-        provide some default values.
-    */
     const [currentEvent, setCurrentEvent] = useState({
         title: "",
-        dateTime: "",
+        date_time: "",
         location: "",
-        gameId: 0
+        game: 0
     })
 
     useEffect(() => {
-        // TODO: Get the game types, then set the state
-        getGames().then((data) => { setGames(data) })
-    }, [])
+        getSingleEvent(eventId).then(eventData => {
+                setCurrentEvent(eventData)
+            })
+        getGames().then(data => {setGames(data)})
+    }, [eventId])
 
-    const changeEventState = (evt) => {
-        // TODO: Complete the onChange function
-        const { name, value } = evt.target;
+    const changeEventState = (event) => {
+        const {name, value} = event.target
         setCurrentEvent((prevState) => ({
             ...prevState,
             [name]: value,
-        }));
-    };
+        }))
+    }
+    
+
 
     return (
         <form className="eventForm">
-            <h2 className="eventForm__title">Register New Game</h2>
+            <h2 className="eventForm__title">Edit Event</h2>
             <fieldset>
                 <div className="form-group">
                     <label htmlFor="title">Title: </label>
@@ -57,7 +56,7 @@ export const EventForm = () => {
                         name="dateTime"
                         required autoFocus
                         className="form-control"
-                        value={currentEvent.dateTime}
+                        value={currentEvent.date_time}
                         onChange={changeEventState}
                     />
                 </div>
@@ -77,15 +76,15 @@ export const EventForm = () => {
             </fieldset>
             <fieldset>
                 <div className="form-group">
-                    <label htmlFor="gameId">Game Being Played: </label>
+                    <label htmlFor="game">Game Being Played: </label>
                     <select
-                        name="gameId"
+                        name="game"
                         required autoFocus
                         className="form-control"
-                        value={currentEvent.gameId}
+                        value={currentEvent.game.id}
                         onChange={changeEventState}
                     >
-                        <option value="">Select Game</option>
+                        <option value="0">Select Game</option>
                         {games.map((item) => (
                             <option key={item.id} value={item.id}>
                                 {item.title}
@@ -102,18 +101,19 @@ export const EventForm = () => {
                     // Prevent form from being submitted
                     evt.preventDefault()
 
-                    const event = {
+                    const updatedEvent = {
+                        id: eventId,
                         title: currentEvent.title,
-                        date_time: currentEvent.dateTime,
+                        date_time: currentEvent.date_time,
                         location: currentEvent.location,
-                        game: parseInt(currentEvent.gameId)
+                        game: parseInt(currentEvent.game)
                     }
 
                     // Send POST request to your API
-                    createEvent(event)
+                    editEvent(eventId, updatedEvent)
                         .then(() => navigate("/events"))
                 }}
-                className="btn btn-primary">Create</button>
+                className="btn btn-primary">Finish</button>
         </form>
     )
 }
